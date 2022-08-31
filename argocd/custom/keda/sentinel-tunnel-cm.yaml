@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: sentinel-tunnel-config
+    namespace: keda
+    labels:
+        app: sentinel-tunnel
+data:
+    config.json: |
+        {
+            "Sentinels_addresses_list":[
+                "redis-node-0.redis.svc.cluster.local:26379",
+                "redis-node-1.redis.svc.cluster.local:26379",
+                "redis-node-2.redis.svc.cluster.local:26379"
+            ],
+            "Databases":[
+                {
+                    "Name":"celery",
+                    "Local_port":"6379"
+                }
+            ]
+        }

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flower
+  labels:
+    k8s-app: flower
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: flower
+  template:
+    metadata:
+      labels:
+        k8s-app: flower
+    spec:
+      containers:
+      - name: flower
+        image: mher/flower
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: celery-env
+        ports:
+        - containerPort: 8080
+          name: web
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flower
+  labels:
+    k8s-app: flower
+spec:
+  selector:
+    k8s-app: flower
+  ports:
+  - name: web
+    port: 8080
+    protocol: TCP

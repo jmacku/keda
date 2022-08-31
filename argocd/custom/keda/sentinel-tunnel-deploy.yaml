@@ -1,0 +1,61 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sentinel-tunnel
+    namespace: keda
+    labels:
+        app: sentinel-tunnel
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: sentinel-tunnel
+    template:
+        metadata:
+            labels:
+                app: sentinel-tunnel
+        spec:
+            imagePullSecrets:
+                -   name: dockerhub
+            containers:
+                -   name: sentinel-tunnel
+                    image: twistopayments/sentinel-tunnel:latest
+                    ports:
+                        -   name: redis
+                            containerPort: 6379
+                    readinessProbe:
+                        initialDelaySeconds: 3
+                        periodSeconds: 5
+                        timeoutSeconds: 3
+                        exec:
+                            command:
+                                - sh
+                                - -c
+                                - /usr/local/bin/redis_healthcheck.sh 3
+                    livenessProbe:
+                        initialDelaySeconds: 3
+                        periodSeconds:  5
+                        timeoutSeconds: 3
+                        exec:
+                            command:
+                                - sh
+                                - -c
+                                - /usr/local/bin/redis_healthcheck.sh 3
+                    volumeMounts:
+                        -   name: config
+                            mountPath: /etc/sentinel_tunnel/config.json
+                            subPath: config.json
+                            readOnly: true
+                    resources:
+                        requests:
+                            memory: "50Mi"
+                            cpu: "200m"
+                        limits:
+                            memory: "100Mi"
+                            cpu: "400m"
+            volumes:
+                -   name: config
+                    configMap:
+                        name: sentinel-tunnel-config
+                        defaultMode: 0600

@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  labels:
+    name: redis
+  name: redis
+  namespace: argo
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    targetRevision: v17.1.2
+    path: ""
+    chart: redis
+    helm:
+      version: v3
+      values: |
+        auth:
+          enabled: false
+          sentinel: false
+          password: "redis"
+        replica:
+          replicaCount: 2
+        sentinel:
+          enabled: true
+  destination:
+    name: in-cluster
+    namespace: redis
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - Validate=true
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

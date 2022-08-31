@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-web
+  labels:
+    k8s-app: celery-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: celery-web
+  template:
+    metadata:
+      labels:
+        k8s-app: celery-web
+    spec:
+      imagePullSecrets:
+          -   name: dockerhub
+      containers:
+      - name: web
+        image: jmacku/celery-app:v0.0.5
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_PASS
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: postgres-postgresql
+        envFrom:
+        - configMapRef:
+            name: celery-env
+        command: ["flask"]
+        args: ["run", "--host=0.0.0.0"]
+        resources:
+          limits:
+            cpu: 100m
+            memory: 200Mi
+          requests:
+            cpu: 50m
+            memory: 90Mi
+        ports:
+        - containerPort: 5000
+          name: web
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: celery-web
+  labels:
+    k8s-app: celery-web
+spec:
+  selector:
+    k8s-app: celery-web
+  ports:
+  - name: web
+    port: 5000
+    protocol: TCP

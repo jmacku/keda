@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  labels:
+    app: celery-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      imagePullSecrets:
+          -   name: dockerhub
+      containers:
+      - name: worker
+        image: jmacku/celery-app:v0.0.5
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_PASS
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: postgres-postgresql
+        envFrom:
+        - configMapRef:
+            name: celery-env
+        command: ["celery"]
+        args: 
+          - -A
+          - app
+          - worker 
+          - --loglevel=info
+          - --concurrency=1
+          - --max-tasks-per-child=100
+          - --queues=celery
+        securityContext:
+            runAsUser: 1001
+            runAsNonRoot: true
+        resources:
+          limits:
+            cpu: 100m
+            memory: 200Mi
+          requests:
+            cpu: 50m
+            memory: 90Mi

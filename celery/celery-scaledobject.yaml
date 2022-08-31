@@ -1,0 +1,24 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: celery-scaledobject
+  namespace: celery
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: celery-worker
+  pollingInterval: 10
+  cooldownPeriod: 20
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  triggers:
+    - type: redis-sentinel
+      metadata:
+        addresses: redis.redis.svc.cluster.local:26379
+        sentinelMaster: redis.redis.svc.cluster.local:26379
+        enableTLS: "false"
+        listName: celery
+        listLength: "3"
+        activationListLength: "1"
+        sentinelUsername: ""
+        sentinelPassword: ""
